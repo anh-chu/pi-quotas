@@ -23,7 +23,7 @@ pi install npm:@latentminds/pi-quotas
 **From source:**
 
 ```bash
-git clone https://github.com/latentminds/pi-quotas.git
+git clone https://github.com/latentminds-ai/pi-quotas.git
 pi install ./pi-quotas
 ```
 

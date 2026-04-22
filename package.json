@@ -8,7 +8,7 @@
   "keywords": ["pi-package", "pi-extension", "pi"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/latentminds/pi-quotas"
+    "url": "https://github.com/latentminds-ai/pi-quotas"
   },
   "pi": {
     "extensions": [
@@ -17,7 +17,7 @@
       "./src/extensions/usage-status/index.ts",
       "./src/extensions/quota-warnings/index.ts"
     ],
-    "image": "https://raw.githubusercontent.com/latentminds/pi-quotas/main/docs/quotas-dashboard.png"
+    "image": "https://raw.githubusercontent.com/latentminds-ai/pi-quotas/main/docs/quotas-dashboard.png"
   },
   "files": ["src", "README.md", "LICENSE"],
   "peerDependencies": {
