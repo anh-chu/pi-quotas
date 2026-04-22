@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/latent-minds@2x.png" alt="Latent Minds" width="320" />
-</p>
-
 # @latentminds/pi-quotas
 
 Quota monitoring for the [Pi coding agent](https://github.com/mariozechner/pi). Shows remaining usage and rate limits for Anthropic, OpenAI Codex, and GitHub Copilot — directly in your Pi session.
@@ -92,3 +88,7 @@ No additional setup is required — if Pi can use the provider, pi-quotas can ch
 ## License
 
 [MIT](LICENSE) © Latent Minds Pty Ltd
+
+<p align="center">
+  <img src="docs/latent-minds@2x.png" alt="Latent Minds" width="320" />
+</p>
