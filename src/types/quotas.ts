@@ -1,7 +1,8 @@
 export type SupportedQuotaProvider =
   | "anthropic"
   | "openai-codex"
-  | "github-copilot";
+  | "github-copilot"
+  | "openrouter";
 
 export type QuotasErrorKind =
   | "cancelled"

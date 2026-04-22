@@ -65,7 +65,7 @@ async function openQuotaView(
 
 export function registerQuotasCommands(pi: ExtensionAPI): void {
   pi.registerCommand("quotas", {
-    description: "Display remaining quotas for Anthropic, Codex, and GitHub Copilot",
+    description: "Display remaining quotas for Anthropic, Codex, GitHub Copilot, and OpenRouter",
     handler: async (_args, ctx) => {
       if (!configLoader.getConfig().quotasCommand) {
         ctx.ui.notify("/quotas is disabled. Re-enable it in /quotas:settings.", "warning");

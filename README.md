@@ -1,6 +1,6 @@
 # @latentminds/pi-quotas
 
-Quota monitoring for the [Pi coding agent](https://github.com/mariozechner/pi). Shows remaining usage and rate limits for Anthropic, OpenAI Codex, and GitHub Copilot — directly in your Pi session.
+Quota monitoring for the [Pi coding agent](https://github.com/mariozechner/pi). Shows remaining usage and rate limits for Anthropic, OpenAI Codex, GitHub Copilot, and OpenRouter — directly in your Pi session.
 
 ## Screenshots
 
@@ -37,6 +37,7 @@ pi -e npm:@latentminds/pi-quotas
 | `/anthropic:quotas` | Anthropic quotas only |
 | `/codex:quotas` | OpenAI Codex quotas only |
 | `/github:quotas` | GitHub Copilot quotas only |
+| `/openrouter:quotas` | OpenRouter quotas only |
 | `/quotas:settings` | Toggle individual features on or off |
 
 ## Features
@@ -47,7 +48,7 @@ Run `/quotas` to open a bordered TUI view showing all providers side by side, wi
 
 ### Footer status widget
 
-When your active model is from a supported provider, the Pi footer shows real-time quota headroom — updated every 60 seconds and on each turn. Colours shift from green → amber → red as usage climbs.
+When your active model is from a supported provider, the Pi footer shows real-time quota headroom - updated every 60 seconds and on each turn. Colours shift from green → amber → red as usage climbs.
 
 ### Quota warnings
 
@@ -57,7 +58,7 @@ Automatic notifications when projected usage is on track to exceed limits before
 
 Use `/quotas:settings` to enable or disable:
 - Combined `/quotas` command
-- Per-provider commands (`/anthropic:quotas`, `/codex:quotas`, `/github:quotas`)
+- Per-provider commands (`/anthropic:quotas`, `/codex:quotas`, `/github:quotas`, `/openrouter:quotas`)
 - Footer status widget
 - Quota warning notifications
 
@@ -70,6 +71,7 @@ Settings can be saved globally (`~/.pi/agent/extensions/quotas.json`) or per-pro
 | Anthropic | 5h, 7d, per-model 7d, extra usage | Utilization percentages; optional overage budget in local currency |
 | OpenAI Codex | 5h, 7d, credits, spend cap | Rate-limit percentages; credit balance; spend-cap reached/OK |
 | GitHub Copilot | Premium/chat/completions per month | Remaining/entitlement counts with overage indicators |
+| OpenRouter | Monthly budget, daily/weekly/monthly usage | USD spending tracking with cents precision; optional per-key budget limits; UTC-based period resets |
 
 ## Credentials
 
@@ -78,8 +80,9 @@ pi-quotas reads existing Pi auth entries from `~/.pi/agent/auth.json`:
 - `anthropic` — Anthropic OAuth token
 - `openai-codex` — Codex access token (also reads `~/.codex/auth.json` for the account ID)
 - `github-copilot` — GitHub Copilot OAuth token (falls back to `gh auth token` if needed)
+- `openrouter` — OpenRouter API key (Bearer token)
 
-No additional setup is required — if Pi can use the provider, pi-quotas can check its quotas.
+No additional setup is required - if Pi can use the provider, pi-quotas can check its quotas.
 
 ## Requirements
 

@@ -53,7 +53,7 @@ describe("formatWindowStatus", () => {
       limitValue: 300,
     };
     const result = formatWindowStatus(theme, w);
-    expect(result).toContain("$215/$300");
+    expect(result).toContain("$215.00/$300.00");
     expect(result).toContain("[warning]");
   });
 

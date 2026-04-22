@@ -243,3 +243,112 @@ export function parseGitHubCopilotUsage(data: any): QuotaWindow[] {
 
   return windows;
 }
+
+// Helper functions for OpenRouter date calculations (UTC-based)
+function calculateNextMidnightUTC(): Date {
+  const now = new Date();
+  const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
+  return midnight;
+}
+
+function calculateNextMondayUTC(): Date {
+  const now = new Date();
+  const day = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+  const daysUntilMonday = day === 0 ? 1 : (8 - day); // Days until next Monday
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilMonday, 0, 0, 0));
+  return monday;
+}
+
+function calculateNextMonthStartUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
+}
+
+export function parseOpenRouterUsage(data: any): QuotaWindow[] {
+  const windows: QuotaWindow[] = [];
+  const keyData = data?.data;
+
+  if (!keyData) return windows;
+
+  const limit = keyData.limit;
+  const limitRemaining = keyData.limit_remaining;
+  const usageDaily = keyData.usage_daily ?? 0;
+  const usageWeekly = keyData.usage_weekly ?? 0;
+  const usageMonthly = keyData.usage_monthly ?? 0;
+
+  // Monthly budget window (if limit is set)
+  if (limit != null && limit > 0) {
+    const usedPercent = safePercent(usageMonthly, limit);
+    windows.push({
+      provider: "openrouter",
+      label: "Monthly Budget",
+      usedPercent,
+      resetsAt: calculateNextMonthStartUTC(),
+      windowSeconds: 30 * 24 * 60 * 60,
+      usedValue: usageMonthly,
+      limitValue: limit,
+      isCurrency: true,
+      showPace: true,
+      paceScale: 1,
+      nextLabel: "Resets",
+    });
+  } else if (limitRemaining != null && limitRemaining >= 0) {
+    // Unlimited key with remaining tracked
+    windows.push({
+      provider: "openrouter",
+      label: "Credits Remaining",
+      usedPercent: 0,
+      resetsAt: new Date(0),
+      windowSeconds: 0,
+      usedValue: limitRemaining,
+      limitValue: limitRemaining,
+      isCurrency: true,
+      showPace: false,
+      nextLabel: undefined,
+    });
+  }
+
+  // Daily usage window (tracking only)
+  windows.push({
+    provider: "openrouter",
+    label: "Daily",
+    usedPercent: 0,
+    resetsAt: calculateNextMidnightUTC(),
+    windowSeconds: 24 * 60 * 60,
+    usedValue: usageDaily,
+    limitValue: 0,
+    isCurrency: true,
+    showPace: false,
+    nextLabel: "UTC",
+  });
+
+  // Weekly usage window (tracking only)
+  windows.push({
+    provider: "openrouter",
+    label: "Weekly",
+    usedPercent: 0,
+    resetsAt: calculateNextMondayUTC(),
+    windowSeconds: 7 * 24 * 60 * 60,
+    usedValue: usageWeekly,
+    limitValue: 0,
+    isCurrency: true,
+    showPace: false,
+    nextLabel: "Week",
+  });
+
+  // Monthly usage window (tracking only)
+  windows.push({
+    provider: "openrouter",
+    label: "Monthly",
+    usedPercent: 0,
+    resetsAt: calculateNextMonthStartUTC(),
+    windowSeconds: 30 * 24 * 60 * 60,
+    usedValue: usageMonthly,
+    limitValue: 0,
+    isCurrency: true,
+    showPace: false,
+    nextLabel: "Month",
+  });
+
+  return windows;
+}

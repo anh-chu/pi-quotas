@@ -3,6 +3,7 @@ import {
   fetchAnthropicQuotasWithToken,
   fetchCodexQuotasWithToken,
   fetchGitHubCopilotQuotasWithToken,
+  fetchOpenRouterQuotasWithToken,
 } from "./fetch.js";
 
 const originalFetch = globalThis.fetch;
@@ -133,5 +134,64 @@ describe("fetchGitHubCopilotQuotasWithToken", () => {
     const result = await fetchGitHubCopilotQuotasWithToken("gh-token");
     expect(result.success).toBe(true);
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("fetchOpenRouterQuotasWithToken", () => {
+  it("returns config error when token missing", async () => {
+    const result = await fetchOpenRouterQuotasWithToken(undefined);
+    expect(result).toMatchObject({
+      success: false,
+      error: { kind: "config" },
+    });
+  });
+
+  it("fetches and parses OpenRouter key info with budget", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            label: "Test Key",
+            limit: 50,
+            limit_remaining: 35,
+            limit_reset: "monthly",
+            usage: 15,
+            usage_daily: 2.5,
+            usage_weekly: 12,
+            usage_monthly: 15,
+            byok_usage: 0,
+            byok_usage_daily: 0,
+            byok_usage_weekly: 0,
+            byok_usage_monthly: 0,
+            is_free_tier: false,
+          },
+        }),
+        { status: 200 },
+      ),
+    ) as any;
+
+    const result = await fetchOpenRouterQuotasWithToken("sk-or-test");
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.provider).toBe("openrouter");
+      expect(result.data.windows).toHaveLength(4);
+      expect(result.data.windows[0]).toMatchObject({
+        label: "Monthly Budget",
+        usedValue: 15,
+        limitValue: 50,
+      });
+    }
+  });
+
+  it("handles HTTP error", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("Unauthorized", { status: 401 }),
+    ) as any;
+
+    const result = await fetchOpenRouterQuotasWithToken("bad-key");
+    expect(result).toMatchObject({
+      success: false,
+      error: { kind: "http" },
+    });
   });
 });

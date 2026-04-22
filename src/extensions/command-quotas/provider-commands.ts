@@ -28,5 +28,11 @@ export function getProviderCommandInfo(
         commandName: "github:quotas",
         title: "GitHub Copilot Quotas",
       };
+    case "openrouter":
+      return {
+        provider,
+        commandName: "openrouter:quotas",
+        title: "OpenRouter Quotas",
+      };
   }
 }

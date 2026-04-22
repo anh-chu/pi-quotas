@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseAnthropicUsage } from "./providers.js";
 import { parseCodexUsage } from "./providers.js";
 import { parseGitHubCopilotUsage } from "./providers.js";
+import { parseOpenRouterUsage } from "./providers.js";
 
 describe("parseAnthropicUsage", () => {
   it("maps oauth usage response into quota windows", () => {
@@ -252,5 +253,158 @@ describe("parseGitHubCopilotUsage", () => {
     expect(windows).toHaveLength(2);
     expect(windows[0]).toMatchObject({ label: "Chat / month", usedPercent: 18 });
     expect(windows[1]).toMatchObject({ label: "Completions / month", usedPercent: 0 });
+  });
+});
+
+describe("parseOpenRouterUsage", () => {
+  it("maps API response with monthly budget limit", () => {
+    const windows = parseOpenRouterUsage({
+      data: {
+        label: "Test Key",
+        limit: 50,
+        limit_remaining: 35,
+        limit_reset: "monthly",
+        usage: 15,
+        usage_daily: 2.5,
+        usage_weekly: 12,
+        usage_monthly: 15,
+        byok_usage: 0,
+        byok_usage_daily: 0,
+        byok_usage_weekly: 0,
+        byok_usage_monthly: 0,
+        creator_user_id: "user123",
+        include_byok_in_limit: false,
+        is_free_tier: false,
+        is_management_key: false,
+        is_provisioning_key: false,
+      },
+    });
+
+    // When limit is set, we get: Monthly Budget + Daily + Weekly + Monthly = 4 windows
+    expect(windows).toHaveLength(4);
+
+    // Monthly Budget window
+    const budget = windows.find((w) => w.label === "Monthly Budget");
+    expect(budget).toBeDefined();
+    expect(budget).toMatchObject({
+      provider: "openrouter",
+      label: "Monthly Budget",
+      usedPercent: 30, // 15/50 = 30%
+      isCurrency: true,
+      usedValue: 15,
+      limitValue: 50,
+      showPace: true,
+    });
+
+    // Daily, Weekly, Monthly usage windows
+    expect(windows.find((w) => w.label === "Daily")).toBeDefined();
+    expect(windows.find((w) => w.label === "Weekly")).toBeDefined();
+    expect(windows.find((w) => w.label === "Monthly")).toBeDefined();
+  });
+
+  it("maps unlimited key with remaining credits", () => {
+    const windows = parseOpenRouterUsage({
+      data: {
+        label: "Unlimited Key",
+        limit: null,
+        limit_remaining: 100,
+        limit_reset: null,
+        usage: 50,
+        usage_daily: 5,
+        usage_weekly: 20,
+        usage_monthly: 50,
+        byok_usage: 0,
+        byok_usage_daily: 0,
+        byok_usage_weekly: 0,
+        byok_usage_monthly: 0,
+        creator_user_id: "user123",
+        include_byok_in_limit: false,
+        is_free_tier: false,
+        is_management_key: false,
+        is_provisioning_key: false,
+      },
+    });
+
+    // When unlimited with limit_remaining: Credits Remaining + Daily + Weekly + Monthly = 4 windows
+    expect(windows).toHaveLength(4);
+
+    // Credits Remaining window
+    const remaining = windows.find((w) => w.label === "Credits Remaining");
+    expect(remaining).toBeDefined();
+    expect(remaining).toMatchObject({
+      provider: "openrouter",
+      label: "Credits Remaining",
+      usedPercent: 0,
+      isCurrency: true,
+      usedValue: 100,
+      limitValue: 100,
+      showPace: false,
+    });
+  });
+
+  it("handles zero usage", () => {
+    const windows = parseOpenRouterUsage({
+      data: {
+        label: "Test Key",
+        limit: 100,
+        limit_remaining: 100,
+        limit_reset: "monthly",
+        usage: 0,
+        usage_daily: 0,
+        usage_weekly: 0,
+        usage_monthly: 0,
+        byok_usage: 0,
+        byok_usage_daily: 0,
+        byok_usage_weekly: 0,
+        byok_usage_monthly: 0,
+        creator_user_id: "user123",
+        include_byok_in_limit: false,
+        is_free_tier: false,
+        is_management_key: false,
+        is_provisioning_key: false,
+      },
+    });
+
+    const budget = windows.find((w) => w.label === "Monthly Budget");
+    expect(budget).toBeDefined();
+    expect(budget!.usedPercent).toBe(0);
+  });
+
+  it("returns empty array when no data", () => {
+    const windows = parseOpenRouterUsage({});
+    expect(windows).toHaveLength(0);
+  });
+
+  it("handles missing limit_remaining for unlimited keys", () => {
+    const windows = parseOpenRouterUsage({
+      data: {
+        label: "Test Key",
+        limit: null,
+        limit_remaining: null,
+        limit_reset: null,
+        usage: 25,
+        usage_daily: 3,
+        usage_weekly: 10,
+        usage_monthly: 25,
+        byok_usage: 0,
+        byok_usage_daily: 0,
+        byok_usage_weekly: 0,
+        byok_usage_monthly: 0,
+        creator_user_id: "user123",
+        include_byok_in_limit: false,
+        is_free_tier: false,
+        is_management_key: false,
+        is_provisioning_key: false,
+      },
+    });
+
+    // Should not have "Credits Remaining" window if limit_remaining is null
+    const remaining = windows.find((w) => w.label === "Credits Remaining");
+    expect(remaining).toBeUndefined();
+
+    // But should still have usage tracking windows
+    expect(windows.find((w) => w.label === "Daily")).toBeDefined();
+    expect(windows.find((w) => w.label === "Weekly")).toBeDefined();
+    expect(windows.find((w) => w.label === "Monthly")).toBeDefined();
   });
 });

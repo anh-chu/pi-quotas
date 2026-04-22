@@ -6,18 +6,21 @@ export const SUPPORTED_PROVIDERS: SupportedQuotaProvider[] = [
   "anthropic",
   "openai-codex",
   "github-copilot",
+  "openrouter",
 ];
 
 export const PROVIDER_LABELS: Record<SupportedQuotaProvider, string> = {
   anthropic: "Anthropic",
   "openai-codex": "OpenAI Codex",
   "github-copilot": "GitHub Copilot",
+  openrouter: "OpenRouter",
 };
 
 const PROVIDER_TTLS_MS: Record<SupportedQuotaProvider, number> = {
   anthropic: 5 * 60_000,
   "openai-codex": 60_000,
   "github-copilot": 5 * 60_000,
+  openrouter: 60_000,
 };
 
 type CacheEntry = {

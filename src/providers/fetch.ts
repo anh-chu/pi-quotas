@@ -8,6 +8,7 @@ import {
   parseAnthropicUsage,
   parseCodexUsage,
   parseGitHubCopilotUsage,
+  parseOpenRouterUsage,
 } from "./providers.js";
 
 const FETCH_TIMEOUT_MS = 15_000;
@@ -238,8 +239,38 @@ export async function fetchGitHubCopilotQuotas(
   );
 }
 
+export async function fetchOpenRouterQuotasWithToken(
+  accessToken: string | undefined,
+  signal?: AbortSignal,
+): Promise<QuotasResult> {
+  if (!accessToken) return failure("No OpenRouter API key found", "config");
+  const result = await fetchJson(
+    "https://openrouter.ai/api/v1/key",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
+      },
+    },
+    signal,
+  );
+  if (!result.ok) return failure(result.message, result.kind);
+  return success("openrouter", parseOpenRouterUsage(result.data));
+}
+
+export async function fetchOpenRouterQuotas(
+  authStorage: AuthStorage,
+  signal?: AbortSignal,
+): Promise<QuotasResult> {
+  return fetchOpenRouterQuotasWithToken(
+    await providerAccessToken(authStorage, "openrouter"),
+    signal,
+  );
+}
+
 export const PROVIDER_FETCHERS = {
   anthropic: fetchAnthropicQuotas,
   "openai-codex": fetchCodexQuotas,
   "github-copilot": fetchGitHubCopilotQuotas,
+  openrouter: fetchOpenRouterQuotas,
 } as const;

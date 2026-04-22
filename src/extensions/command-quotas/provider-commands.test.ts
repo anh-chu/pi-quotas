@@ -31,4 +31,13 @@ describe("getProviderCommandInfo", () => {
       title: "GitHub Copilot Quotas",
     });
   });
+
+  it("maps openrouter to openrouter:quotas", () => {
+    const info = getProviderCommandInfo("openrouter");
+    expect(info).toMatchObject<Partial<ProviderCommandInfo>>({
+      provider: "openrouter",
+      commandName: "openrouter:quotas",
+      title: "OpenRouter Quotas",
+    });
+  });
 });

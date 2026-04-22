@@ -31,6 +31,12 @@ const SHORT_LABELS: Record<string, string> = {
   "Extra (USD)": "extra",
   "Extra (EUR)": "extra",
   "Extra (GBP)": "extra",
+  // OpenRouter labels
+  "Monthly Budget": "budget",
+  "Credits Remaining": "credits",
+  "Daily": "daily",
+  "Weekly": "weekly",
+  "Monthly": "monthly",
 };
 
 /**
@@ -66,7 +72,12 @@ export function formatWindowStatus(theme: ThemeLike, w: WindowStatus): string {
   if (w.label === "Spend cap") {
     valueText = theme.fg(color, w.limited ? "REACHED" : "OK");
   } else if (w.isCurrency && w.usedValue != null && w.limitValue != null) {
-    valueText = theme.fg(color, `$${w.usedValue.toFixed(0)}/$${w.limitValue.toFixed(0)}`);
+    // Tracking-only windows have limitValue=0, show just usage
+    if (w.limitValue === 0) {
+      valueText = theme.fg(color, `$${w.usedValue.toFixed(2)} used`);
+    } else {
+      valueText = theme.fg(color, `$${w.usedValue.toFixed(2)}/$${w.limitValue.toFixed(2)}`);
+    }
   } else if (hasRealCounts(w)) {
     const remaining = Math.max(0, Math.round(w.limitValue! - w.usedValue!));
     valueText = theme.fg(color, `${remaining}/${w.limitValue}`);
