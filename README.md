@@ -1,59 +1,94 @@
+<p align="center">
+  <img src="docs/latent-minds@2x.png" alt="Latent Minds" width="320" />
+</p>
+
 # @latentminds/pi-quotas
 
-Pi extension package for showing remaining quota/usage for:
+Quota monitoring for the [Pi coding agent](https://github.com/mariozechner/pi). Shows remaining usage and rate limits for Anthropic, OpenAI Codex, and GitHub Copilot — directly in your Pi session.
 
-- Anthropic
-- OpenAI Codex
-- GitHub Copilot
+## Screenshots
 
-## Features
-
-- `/quotas` command for a combined quota dashboard
-- `/anthropic:quotas`, `/codex:quotas`, `/github:quotas`
-- `/quotas:settings` interactive toggles
-- Footer status widget for the currently selected provider
-- Quota warnings when projected usage is risky
+| `/quotas` dashboard | Footer status |
+|---|---|
+| ![Quotas dashboard](docs/quotas-dashboard.png) | ![Footer status](docs/footer-status.png) |
 
 ## Install
 
-```bash
-pi install /absolute/path/to/quotas
-```
-
-Or for local development:
+**From npm** (recommended):
 
 ```bash
-pi -e ./src/extensions/command-quotas/index.ts \
-   -e ./src/extensions/usage-status/index.ts \
-   -e ./src/extensions/quota-warnings/index.ts
+pi install npm:@latentminds/pi-quotas
 ```
+
+**From source:**
+
+```bash
+git clone https://github.com/latentminds/pi-quotas.git
+pi install ./pi-quotas
+```
+
+**Try without installing:**
+
+```bash
+pi -e npm:@latentminds/pi-quotas
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/quotas` | Combined quota dashboard for all providers |
+| `/anthropic:quotas` | Anthropic quotas only |
+| `/codex:quotas` | OpenAI Codex quotas only |
+| `/github:quotas` | GitHub Copilot quotas only |
+| `/quotas:settings` | Toggle individual features on or off |
+
+## Features
+
+### Quota dashboard
+
+Run `/quotas` to open a bordered TUI view showing all providers side by side, with progress bars, used/remaining counts, and reset times. Press `r` to refresh, `q` or `Esc` to close.
+
+### Footer status widget
+
+When your active model is from a supported provider, the Pi footer shows real-time quota headroom — updated every 60 seconds and on each turn. Colours shift from green → amber → red as usage climbs.
+
+### Quota warnings
+
+Automatic notifications when projected usage is on track to exceed limits before the window resets. Warnings escalate from `warning` → `high` → `critical` based on your consumption pace.
+
+### Per-feature toggles
+
+Use `/quotas:settings` to enable or disable:
+- Combined `/quotas` command
+- Per-provider commands (`/anthropic:quotas`, `/codex:quotas`, `/github:quotas`)
+- Footer status widget
+- Quota warning notifications
+
+Settings can be saved globally (`~/.pi/agent/extensions/quotas.json`) or per-project (`.pi/quotas.json`). Run `/reload` after changing command visibility.
+
+## Supported providers
+
+| Provider | Windows | Details |
+|----------|---------|---------|
+| Anthropic | 5h, 7d, per-model 7d, extra usage | Utilization percentages; optional overage budget in local currency |
+| OpenAI Codex | 5h, 7d, credits, spend cap | Rate-limit percentages; credit balance; spend-cap reached/OK |
+| GitHub Copilot | Premium/chat/completions per month | Remaining/entitlement counts with overage indicators |
 
 ## Credentials
 
-This package reads existing Pi auth entries from `~/.pi/agent/auth.json`:
+pi-quotas reads existing Pi auth entries from `~/.pi/agent/auth.json`:
 
-- `anthropic`
-- `openai-codex`
-- `github-copilot`
+- `anthropic` — Anthropic OAuth token
+- `openai-codex` — Codex access token (also reads `~/.codex/auth.json` for the account ID)
+- `github-copilot` — GitHub Copilot OAuth token (falls back to `gh auth token` if needed)
 
-For Codex, it also reads `~/.codex/auth.json` to resolve the ChatGPT account id when needed.
+No additional setup is required — if Pi can use the provider, pi-quotas can check its quotas.
 
-## Usage
+## Requirements
 
-```text
-/quotas
-/anthropic:quotas
-/codex:quotas
-/github:quotas
-/quotas:settings
-```
+- [Pi](https://github.com/mariozechner/pi) >= 0.61.0
 
-When one of the supported providers is the active model provider, the footer shows current quota headroom.
+## License
 
-Use `/quotas:settings` to enable or disable:
-- combined command
-- provider-specific commands
-- usage footer status
-- warning notifications
-
-After changing command visibility, run `/reload` to fully apply command registration changes.
+[MIT](LICENSE) © Latent Minds Pty Ltd
