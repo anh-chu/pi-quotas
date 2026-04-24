@@ -42,7 +42,15 @@ function createStatusRefresher() {
 	let queued = false;
 
 	async function update(ctx: ExtensionContext): Promise<void> {
-		if (!ctx.hasUI || !activeProvider || !isSupportedProvider(activeProvider))
+		let hasUI: boolean;
+		try {
+			hasUI = ctx.hasUI;
+		} catch {
+			// ctx is stale (session replaced or reloaded) — stop polling
+			activeContext = undefined;
+			return;
+		}
+		if (!hasUI || !activeProvider || !isSupportedProvider(activeProvider))
 			return;
 		if (inFlight) {
 			queued = true;
