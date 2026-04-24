@@ -18,7 +18,7 @@ import { assessWindow } from "../../utils/quotas-severity.js";
 import { formatWindowStatus, type WindowStatus } from "./format-status.js";
 
 const EXTENSION_ID = "pi-quotas-usage";
-const REFRESH_INTERVAL_MS = 60_000;
+const REFRESH_INTERVAL_MS = 5 * 60_000;
 
 function formatStatus(ctx: ExtensionContext, windows: WindowStatus[]): string {
 	const theme = ctx.ui.theme;

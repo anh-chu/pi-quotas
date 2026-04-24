@@ -1,6 +1,7 @@
 import type { AuthStorage } from "@mariozechner/pi-coding-agent";
 import { PROVIDER_FETCHERS } from "../providers/fetch.js";
 import type { QuotasResult, SupportedQuotaProvider } from "../types/quotas.js";
+import { readCacheEntry, readStaleCacheEntry, writeCacheEntry } from "./quota-file-cache.js";
 
 export const SUPPORTED_PROVIDERS: SupportedQuotaProvider[] = [
   "anthropic",
@@ -23,23 +24,10 @@ const PROVIDER_TTLS_MS: Record<SupportedQuotaProvider, number> = {
   openrouter: 60_000,
 };
 
-type CacheEntry = {
-  result?: QuotasResult;
-  fetchedAt?: number;
-  inFlight?: Promise<QuotasResult>;
-};
-
-const cache = new Map<SupportedQuotaProvider, CacheEntry>();
-
 export function isSupportedProvider(
   provider: string | undefined,
 ): provider is SupportedQuotaProvider {
   return SUPPORTED_PROVIDERS.includes(provider as SupportedQuotaProvider);
-}
-
-export function clearQuotaCache(provider?: SupportedQuotaProvider): void {
-  if (provider) cache.delete(provider);
-  else cache.clear();
 }
 
 export async function fetchProviderQuotas(
@@ -47,28 +35,27 @@ export async function fetchProviderQuotas(
   provider: SupportedQuotaProvider,
   options?: { force?: boolean; signal?: AbortSignal },
 ): Promise<QuotasResult> {
-  const entry = cache.get(provider) ?? {};
-  const now = Date.now();
   const ttl = PROVIDER_TTLS_MS[provider];
 
-  if (!options?.force && entry.result && entry.fetchedAt && now - entry.fetchedAt < ttl) {
-    return entry.result;
+  // Serve from file cache if fresh
+  if (!options?.force) {
+    const cached = readCacheEntry(provider, ttl);
+    if (cached) return { success: true, data: { provider, windows: cached } };
   }
-  if (!options?.force && entry.inFlight) return entry.inFlight;
 
-  const promise = PROVIDER_FETCHERS[provider](authStorage, options?.signal)
-    .then((result: QuotasResult) => {
-      cache.set(provider, { result, fetchedAt: Date.now() });
-      return result;
-    })
-    .finally(() => {
-      const current = cache.get(provider) ?? {};
-      delete current.inFlight;
-      cache.set(provider, current);
-    });
+  // Fetch from network
+  const result = await PROVIDER_FETCHERS[provider](authStorage, options?.signal);
 
-  cache.set(provider, { ...entry, inFlight: promise });
-  return promise;
+  if (result.success) {
+    writeCacheEntry(provider, result.data.windows);
+    return result;
+  }
+
+  // On failure, serve stale cache rather than surfacing an error
+  const stale = readStaleCacheEntry(provider);
+  if (stale) return { success: true, data: { provider, windows: stale } };
+
+  return result;
 }
 
 export async function fetchAllProviderQuotas(
