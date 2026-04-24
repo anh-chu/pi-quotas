@@ -8,10 +8,9 @@
  * Reads are lock-free for performance; a torn read returns stale/empty.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { getAgentDir } from "@mariozechner/pi-coding-agent";
-import lockfile from "proper-lockfile";
 import type { QuotaWindow, SupportedQuotaProvider } from "../types/quotas.js";
 
 // --- serialization ----------------------------------------------------------
@@ -34,10 +33,9 @@ function cachePath(): string {
   return join(getAgentDir(), "quotas-cache.json");
 }
 
-function ensureFile(path: string): void {
+function ensureDir(path: string): void {
   const dir = dirname(path);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
-  if (!existsSync(path)) writeFileSync(path, "{}", "utf-8");
 }
 
 function readRaw(path: string): FileCache {
@@ -91,8 +89,9 @@ export function readStaleCacheEntry(
 }
 
 /**
- * Write a cache entry. Uses a file lock to prevent races between concurrent
- * sessions. Falls back to a best-effort unlocked write if locking fails.
+ * Write a cache entry. Uses a write-to-temp-then-rename pattern so readers
+ * never see a partial file. Concurrent writers may overwrite each other but
+ * the file is always valid JSON — worst case is a redundant network fetch.
  */
 export function writeCacheEntry(
   provider: SupportedQuotaProvider,
@@ -100,23 +99,13 @@ export function writeCacheEntry(
 ): void {
   const path = cachePath();
   try {
-    ensureFile(path);
-    const release = lockfile.lockSync(path, { realpath: false });
-    try {
-      const cache = readRaw(path);
-      cache[provider] = { windows: serialize(windows), fetchedAt: Date.now() };
-      writeFileSync(path, JSON.stringify(cache, null, 2), "utf-8");
-    } finally {
-      release();
-    }
+    ensureDir(path);
+    const cache = readRaw(path);
+    cache[provider] = { windows: serialize(windows), fetchedAt: Date.now() };
+    const tmp = `${path}.tmp`;
+    writeFileSync(tmp, JSON.stringify(cache, null, 2), "utf-8");
+    renameSync(tmp, path);
   } catch {
-    // Best-effort fallback without lock
-    try {
-      const cache = readRaw(path);
-      cache[provider] = { windows: serialize(windows), fetchedAt: Date.now() };
-      writeFileSync(path, JSON.stringify(cache, null, 2), "utf-8");
-    } catch {
-      // Cache write failed — not critical, next fetch will try again
-    }
+    // Cache write failed — not critical, next fetch will try again
   }
 }
