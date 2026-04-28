@@ -151,12 +151,12 @@ export default async function (pi: ExtensionAPI) {
 		}
 	});
 
-	pi.on("session_start", async (_event, ctx) => {
+	pi.on("session_start", (_event, ctx) => {
 		refresher.invalidate();
 		currentContext = ctx;
 		if (!enabled) return;
 		refresher.start();
-		await refresher.refreshFor(ctx);
+		void refresher.refreshFor(ctx);
 	});
 
 	pi.on("turn_end", async (_event, ctx) => {
