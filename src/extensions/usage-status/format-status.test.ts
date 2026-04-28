@@ -37,7 +37,7 @@ describe("formatWindowStatus", () => {
       limitValue: 100,
     };
     const result = formatWindowStatus(theme, w);
-    expect(result).toContain("91% left");
+    expect(result).toContain("91%");
     expect(result).toContain("[success]");
   });
 
@@ -53,8 +53,23 @@ describe("formatWindowStatus", () => {
       limitValue: 300,
     };
     const result = formatWindowStatus(theme, w);
-    expect(result).toContain("$215.00/$300.00");
+    expect(result).toContain("$215/$300");
     expect(result).toContain("[warning]");
+  });
+
+  it("keeps decimals for non-whole currency values", () => {
+    const w: WindowStatus = {
+      label: "Extra (USD)",
+      usedPercent: 50,
+      severity: "none",
+      resetsAt: "2026-05-01T00:00:00Z",
+      limited: false,
+      isCurrency: true,
+      usedValue: 42.50,
+      limitValue: 100.25,
+    };
+    const result = formatWindowStatus(theme, w);
+    expect(result).toContain("$42.50/$100.25");
   });
 
   it("shows REACHED for spend cap", () => {
@@ -85,7 +100,7 @@ describe("formatWindowStatus", () => {
     const result = formatWindowStatus(theme, w);
     // label should be colored with error (high maps to error)
     expect(result).toContain("[error]7d:");
-    expect(result).toContain("15% left");
+    expect(result).toContain("15%");
   });
 
   it("keeps label dim when severity is none", () => {
