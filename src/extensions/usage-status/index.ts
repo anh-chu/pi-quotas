@@ -22,18 +22,9 @@ const REFRESH_INTERVAL_MS = 5 * 60_000;
 
 function formatStatus(ctx: ExtensionContext, windows: WindowStatus[]): string {
 	const theme = ctx.ui.theme;
-	// Filter to only show windows with actual severity (not "none")
-	const atRisk = windows.filter((w) => w.severity !== "none");
-	// If no windows at all, return empty string
-	if (windows.length === 0) {
-		return "";
-	}
-	// If all windows are healthy, show compact indicator
-	if (atRisk.length === 0) {
-		return theme.fg("success", "quotas ✓");
-	}
-	// Show only windows with severity
-	return atRisk
+	if (windows.length === 0) return "";
+	// Show all windows — healthy ones are already dimmed by formatWindowStatus
+	return windows
 		.map((w) => {
 			const core = formatWindowStatus(theme, w);
 			const reset = w.resetsAt
