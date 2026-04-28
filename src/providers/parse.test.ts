@@ -60,14 +60,11 @@ describe("parseAnthropicUsage", () => {
       five_hour: { utilization: 9, resets_at: "2026-04-22T09:00:00Z" },
       seven_day: { utilization: 31, resets_at: "2026-04-23T23:00:00Z" },
       seven_day_sonnet: { utilization: 8, resets_at: "2026-04-23T23:00:00Z" },
-      seven_day_omelette: { utilization: 23, resets_at: "2026-04-26T23:00:00Z" },
-      seven_day_opus: null,
     });
 
     const sonnet = windows.find((w) => w.label === "7d Sonnet");
-    const opus = windows.find((w) => w.label === "7d Opus");
     expect(sonnet).toMatchObject({ usedPercent: 8 });
-    expect(opus).toMatchObject({ usedPercent: 23 });
+    expect(windows.find((w) => w.label === "7d Opus")).toBeUndefined();
   });
 
   it("skips extra_usage when disabled", () => {

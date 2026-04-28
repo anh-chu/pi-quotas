@@ -50,8 +50,6 @@ export function parseAnthropicUsage(data: any): QuotaWindow[] {
   // Per-model 7d windows
   const modelWindows: Array<[string, string]> = [
     ["seven_day_sonnet", "7d Sonnet"],
-    ["seven_day_omelette", "7d Opus"],
-    ["seven_day_opus", "7d Opus (legacy)"],
   ];
   for (const [key, label] of modelWindows) {
     const entry = data?.[key];

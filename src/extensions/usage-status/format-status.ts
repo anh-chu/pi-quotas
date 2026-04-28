@@ -20,8 +20,6 @@ const SHORT_LABELS: Record<string, string> = {
   "5h": "5h",
   "7d": "7d",
   "7d Sonnet": "7d-son",
-  "7d Opus": "7d-opus",
-  "7d Opus (legacy)": "7d-opus",
   "Premium / month": "premium",
   "Chat / month": "chat",
   "Completions / month": "comp",
