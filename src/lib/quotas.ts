@@ -1,5 +1,4 @@
-import type { AuthStorage } from "@mariozechner/pi-coding-agent";
-import { PROVIDER_FETCHERS } from "../providers/fetch.js";
+import { PROVIDER_FETCHERS, type QuotaAuth } from "../providers/fetch.js";
 import type { QuotasResult, SupportedQuotaProvider } from "../types/quotas.js";
 import { readCacheEntry, readStaleCacheEntry, writeCacheEntry } from "./quota-file-cache.js";
 
@@ -31,7 +30,7 @@ export function isSupportedProvider(
 }
 
 export async function fetchProviderQuotas(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   provider: SupportedQuotaProvider,
   options?: { force?: boolean; signal?: AbortSignal },
 ): Promise<QuotasResult> {
@@ -44,7 +43,7 @@ export async function fetchProviderQuotas(
   }
 
   // Fetch from network
-  const result = await PROVIDER_FETCHERS[provider](authStorage, options?.signal);
+  const result = await PROVIDER_FETCHERS[provider](auth, options?.signal);
 
   if (result.success) {
     writeCacheEntry(provider, result.data.windows);
@@ -59,13 +58,13 @@ export async function fetchProviderQuotas(
 }
 
 export async function fetchAllProviderQuotas(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   options?: { force?: boolean; signal?: AbortSignal },
 ): Promise<Array<{ provider: SupportedQuotaProvider; result: QuotasResult }>> {
   return Promise.all(
     SUPPORTED_PROVIDERS.map(async (provider) => ({
       provider,
-      result: await fetchProviderQuotas(authStorage, provider, options),
+      result: await fetchProviderQuotas(auth, provider, options),
     })),
   );
 }

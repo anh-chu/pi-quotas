@@ -73,7 +73,7 @@ export function registerQuotasCommands(pi: ExtensionAPI): void {
       }
       await openQuotaView(
         "Provider Quotas",
-        (force, signal) => fetchAllProviderQuotas(ctx.modelRegistry.authStorage, { force, signal }),
+        (force, signal) => fetchAllProviderQuotas(ctx.modelRegistry, { force, signal }),
         ctx,
       );
     },
@@ -93,7 +93,7 @@ export function registerQuotasCommands(pi: ExtensionAPI): void {
           async (force, signal) => [
             {
               provider,
-              result: await fetchProviderQuotas(ctx.modelRegistry.authStorage, provider, { force, signal }),
+              result: await fetchProviderQuotas(ctx.modelRegistry, provider, { force, signal }),
             },
           ],
           ctx,

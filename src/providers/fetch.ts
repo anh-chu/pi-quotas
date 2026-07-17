@@ -2,8 +2,16 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { AuthStorage } from "@mariozechner/pi-coding-agent";
 import type { QuotasResult, SupportedQuotaProvider } from "../types/quotas.js";
+
+/**
+ * Minimal auth accessor. Satisfied by the pi `ModelRegistry` (which exposes
+ * `getApiKeyForProvider`). Replaces the old `AuthStorage` dependency, which was
+ * removed from `ModelRegistry` upstream (pi-coding-agent >= 0.80).
+ */
+export interface QuotaAuth {
+  getApiKeyForProvider(provider: string): Promise<string | undefined>;
+}
 import {
   parseAnthropicUsage,
   parseCodexUsage,
@@ -23,15 +31,13 @@ function isTimeoutReason(reason: unknown): boolean {
 }
 
 async function providerAccessToken(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   provider: string,
 ): Promise<string | undefined> {
-  return authStorage.getApiKey(provider);
+  return auth.getApiKeyForProvider(provider);
 }
 
-function codexAccountId(authStorage: AuthStorage): string | undefined {
-  const credential = authStorage.get("openai-codex") as any;
-  if (typeof credential?.accountId === "string") return credential.accountId;
+function codexAccountId(): string | undefined {
   try {
     const authPath = join(homedir(), ".codex", "auth.json");
     const data = JSON.parse(readFileSync(authPath, "utf8")) as any;
@@ -212,29 +218,29 @@ export async function fetchGitHubCopilotQuotasWithToken(
 }
 
 export async function fetchAnthropicQuotas(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   signal?: AbortSignal,
 ): Promise<QuotasResult> {
-  return fetchAnthropicQuotasWithToken(await providerAccessToken(authStorage, "anthropic"), signal);
+  return fetchAnthropicQuotasWithToken(await providerAccessToken(auth, "anthropic"), signal);
 }
 
 export async function fetchCodexQuotas(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   signal?: AbortSignal,
 ): Promise<QuotasResult> {
   return fetchCodexQuotasWithToken(
-    await providerAccessToken(authStorage, "openai-codex"),
-    codexAccountId(authStorage),
+    await providerAccessToken(auth, "openai-codex"),
+    codexAccountId(),
     signal,
   );
 }
 
 export async function fetchGitHubCopilotQuotas(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   signal?: AbortSignal,
 ): Promise<QuotasResult> {
   return fetchGitHubCopilotQuotasWithToken(
-    await providerAccessToken(authStorage, "github-copilot"),
+    await providerAccessToken(auth, "github-copilot"),
     signal,
   );
 }
@@ -259,11 +265,11 @@ export async function fetchOpenRouterQuotasWithToken(
 }
 
 export async function fetchOpenRouterQuotas(
-  authStorage: AuthStorage,
+  auth: QuotaAuth,
   signal?: AbortSignal,
 ): Promise<QuotasResult> {
   return fetchOpenRouterQuotasWithToken(
-    await providerAccessToken(authStorage, "openrouter"),
+    await providerAccessToken(auth, "openrouter"),
     signal,
   );
 }

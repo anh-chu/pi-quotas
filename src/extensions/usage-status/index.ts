@@ -82,7 +82,7 @@ function createStatusRefresher() {
 		inFlight = true;
 		try {
 			const result = await fetchProviderQuotas(
-				ctx.modelRegistry.authStorage,
+				ctx.modelRegistry,
 				activeProvider,
 			);
 			if (!result.success) {
